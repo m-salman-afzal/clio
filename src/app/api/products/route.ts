@@ -26,7 +26,6 @@ const parseSearchParams = (request: NextRequest): TProductSearchParams => {
 };
 
 export const GET = async (request: NextRequest) => {
-  console.log("GET request");
   try {
     const params = parseSearchParams(request);
     const result = await searchProducts(params);
