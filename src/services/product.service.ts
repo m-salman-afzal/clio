@@ -30,7 +30,7 @@ const buildSearchParams = (params: TProductSearchParams) => {
 };
 
 export const getProducts = async (params: TProductSearchParams) => {
-  const response = await fetch(`http://localhost:3000/api/products?${buildSearchParams(params)}`);
+  const response = await fetch(`/api/products?${buildSearchParams(params)}`);
 
   if (!response.ok) {
     const errorBody = (await response.json().catch(() => null)) as {message?: string} | null;
