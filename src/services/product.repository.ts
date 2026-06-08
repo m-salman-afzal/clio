@@ -1,8 +1,8 @@
 import "server-only";
 
-import {currentFilePath} from "@/utils/file.utils";
 import {parse} from "csv-parse/sync";
 import fs from "node:fs/promises";
+import path from "node:path";
 import type {TProductColumn, TProductParsed} from "@/types/product.types";
 import type {InfoField, Options} from "csv-parse";
 
@@ -53,7 +53,8 @@ export const getAllProducts = async (): Promise<TProductParsed[]> => {
     return cachedProducts;
   }
 
-  const csv = await fs.readFile(currentFilePath(import.meta.url, "csv.csv"), "utf-8");
+  const csvPath = path.join(process.cwd(), "src/services/csv.csv");
+  const csv = await fs.readFile(csvPath, "utf-8");
   cachedProducts = parse<TProductParsed>(csv, {
     ...CSV_PARSE_BASE_OPTIONS,
     cast: castProductValue
