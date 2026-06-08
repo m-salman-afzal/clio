@@ -1,7 +1,7 @@
 "use client";
 
-import {useEffect, useState, type FC} from "react";
-import {useDebounce} from "use-debounce";
+import {type FC, useState} from "react";
+import {useDebouncedCallback} from "use-debounce";
 import {SearchIcon} from "lucide-react";
 import {Card, CardContent} from "@/components/ui/card";
 import {Field, FieldGroup, FieldLabel} from "@/components/ui/field";
@@ -10,8 +10,10 @@ import {InputGroup, InputGroupAddon, InputGroupInput} from "@/components/ui/inpu
 import {Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
 import type {TProductAvailability} from "@/types/product.types";
 import {useProductContext} from "@/contexts/product.context";
+import {Button} from "@/components/ui/button.ui";
+import {DEFAULT_PRODUCT_SEARCH_PARAMS} from "@/constants/product.constants";
 
-const DEBOUNCE_MS = 300;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const AVAILABILITY_OPTIONS: {label: string; value: TProductAvailability}[] = [
   {label: "All products", value: "all"},
@@ -21,16 +23,16 @@ const AVAILABILITY_OPTIONS: {label: string; value: TProductAvailability}[] = [
 
 export const ProductSearch: FC = () => {
   const {filters, patchFilters} = useProductContext();
-  const [query, setQuery] = useState(filters.q);
-  const [debouncedQuery] = useDebounce(query, DEBOUNCE_MS);
+  const [searchQuery, setSearchQuery] = useState(filters.q);
+  const debouncedPatchQ = useDebouncedCallback((q: string) => {
+    patchFilters({q, pageNumber: 1});
+  }, SEARCH_DEBOUNCE_MS);
 
-  useEffect(() => {
-    if (debouncedQuery === filters.q) {
-      return;
-    }
-
-    patchFilters({q: debouncedQuery, pageNumber: 1});
-  }, [debouncedQuery, filters.q, patchFilters]);
+  const handleReset = () => {
+    debouncedPatchQ.cancel();
+    setSearchQuery("");
+    patchFilters({...DEFAULT_PRODUCT_SEARCH_PARAMS});
+  };
 
   return (
     <Card>
@@ -44,8 +46,12 @@ export const ProductSearch: FC = () => {
             <InputGroupInput
               id="product-search"
               type="search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
+              value={searchQuery}
+              onChange={(event) => {
+                const q = event.target.value;
+                setSearchQuery(q);
+                debouncedPatchQ(q);
+              }}
               placeholder="Search by title, description, or vendor..."
             />
           </InputGroup>
@@ -115,7 +121,9 @@ export const ProductSearch: FC = () => {
                 })
               }>
               <SelectTrigger id="availability-filter" className="w-full">
-                <SelectValue />
+                <SelectValue>
+                  {AVAILABILITY_OPTIONS.find((option) => option.value === filters.availability)?.label}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectGroup>
@@ -129,6 +137,9 @@ export const ProductSearch: FC = () => {
             </Select>
           </Field>
         </FieldGroup>
+        <Button size="sm" className="w-fit" onClick={handleReset}>
+          Reset
+        </Button>
       </CardContent>
     </Card>
   );
